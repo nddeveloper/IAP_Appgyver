@@ -108,13 +108,13 @@ char* base64(const void* binaryData, int len, int *flen)
 {
   const unsigned char* bin = (const unsigned char*) binaryData ;
   char* res ;
-  
+
   int rc = 0 ; // result counter
   int byteNo ; // I need this after the loop
-  
+
   int modulusLen = len % 3 ;
   int pad = ((modulusLen&1)<<1) + ((modulusLen&2)>>1) ; // 2 gives 1 and 1 gives 2, but 0 gives 0.
-  
+
   *flen = 4*(len + pad)/3 ;
   res = (char*) malloc( *flen + 1 ) ; // and one for the null
   if( !res )
@@ -123,7 +123,7 @@ char* base64(const void* binaryData, int len, int *flen)
     puts( "I must stop because I could not get enough" ) ;
     return 0;
   }
-  
+
   for( byteNo = 0 ; byteNo <= len-3 ; byteNo+=3 )
   {
     unsigned char BYTE0=bin[byteNo];
@@ -134,7 +134,7 @@ char* base64(const void* binaryData, int len, int *flen)
     res[rc++]  = b64[ ((0x0f&BYTE1)<<2) + (BYTE2>>6) ] ;
     res[rc++]  = b64[ 0x3f&BYTE2 ] ;
   }
-  
+
   if( pad==2 )
   {
     res[rc++] = b64[ bin[byteNo] >> 2 ] ;
@@ -149,7 +149,7 @@ char* base64(const void* binaryData, int len, int *flen)
     res[rc++]  = b64[ (0x0f&bin[byteNo+1])<<2 ] ;
     res[rc++] = '=';
   }
-  
+
   res[rc] = 0; // NULL TERMINATOR! ;)
   return res ;
 }
@@ -170,7 +170,7 @@ unsigned char* unbase64( const char* ascii, int len, int *flen )
   }
   if( safeAsciiPtr[ len-1 ]=='=' )  ++pad ;
   if( safeAsciiPtr[ len-2 ]=='=' )  ++pad ;
-  
+
   *flen = 3*len/4 - pad ;
   bin = (unsigned char*)malloc( *flen ) ;
   if( !bin )
@@ -179,25 +179,25 @@ unsigned char* unbase64( const char* ascii, int len, int *flen )
     puts( "I must stop because I could not get enough" ) ;
     return 0;
   }
-  
+
   for( charNo=0; charNo <= len - 4 - pad ; charNo+=4 )
   {
     int A=unb64[safeAsciiPtr[charNo]];
     int B=unb64[safeAsciiPtr[charNo+1]];
     int C=unb64[safeAsciiPtr[charNo+2]];
     int D=unb64[safeAsciiPtr[charNo+3]];
-    
+
     bin[cb++] = (A<<2) | (B>>4) ;
     bin[cb++] = (B<<4) | (C>>2) ;
     bin[cb++] = (C<<6) | (D) ;
   }
-  
+
   if( pad==1 )
   {
     int A=unb64[safeAsciiPtr[charNo]];
     int B=unb64[safeAsciiPtr[charNo+1]];
     int C=unb64[safeAsciiPtr[charNo+2]];
-    
+
     bin[cb++] = (A<<2) | (B>>4) ;
     bin[cb++] = (B<<4) | (C>>2) ;
   }
@@ -205,10 +205,10 @@ unsigned char* unbase64( const char* ascii, int len, int *flen )
   {
     int A=unb64[safeAsciiPtr[charNo]];
     int B=unb64[safeAsciiPtr[charNo+1]];
-    
+
     bin[cb++] = (A<<2) | (B>>4) ;
   }
-  
+
   return bin;
 }
 */
@@ -331,7 +331,7 @@ unsigned char* unbase64( const char* ascii, int len, int *flen )
         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
         return;
     }
-    
+
     NSSet *productIdentifiers = [NSSet setWithArray:inArray];
     DLog(@"Set has %li elements", (unsigned long)[productIdentifiers count]);
     for (NSString *item in productIdentifiers) {
@@ -373,7 +373,7 @@ unsigned char* unbase64( const char* ascii, int len, int *flen )
 - (void) canMakePayments: (CDVInvokedUrlCommand*)command
 {
   CDVPluginResult* pluginResult = nil;
-  
+
   if (![SKPaymentQueue canMakePayments]) {
         DLog(@"Device can't make payments.");
     pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Can't make payments"];
@@ -382,7 +382,7 @@ unsigned char* unbase64( const char* ascii, int len, int *flen )
     DLog(@"Device can make payments.");
     pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"Can make payments"];
   }
-  
+
   [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
@@ -417,7 +417,7 @@ unsigned char* unbase64( const char* ascii, int len, int *flen )
             case SKPaymentTransactionStatePurchased:
 				state = @"PaymentTransactionStatePurchased";
 				transactionIdentifier = transaction.transactionIdentifier;
-				transactionReceipt = [[transaction transactionReceipt] cdv_base64EncodedString];
+				transactionReceipt = [[transaction transactionReceipt] base64EncodedString];
 				productId = transaction.payment.productIdentifier;
                 canFinish = YES;
                 break;
@@ -442,7 +442,7 @@ unsigned char* unbase64( const char* ascii, int len, int *flen )
 				transactionIdentifier = transaction.transactionIdentifier;
                 if (!transactionIdentifier)
                     transactionIdentifier = transaction.originalTransaction.transactionIdentifier;
-				transactionReceipt = [[transaction transactionReceipt] cdv_base64EncodedString];
+				transactionReceipt = [[transaction transactionReceipt] base64EncodedString];
 				productId = transaction.originalTransaction.payment.productIdentifier;
                 canFinish = YES;
                 break;
@@ -554,7 +554,7 @@ unsigned char* unbase64( const char* ascii, int len, int *flen )
 }
 /*
 I started to implement client side receipt validation. However, this requires the inclusion of OpenSSL into the source, which is probably behong what storekit plugin should do. So I choose only to provide base64 encoded receipts to the user, then he can deal with them the way he wants...
- 
+
 The code bellow may eventually work... it is untested
 
 static NSString *rootAppleCA = @"MIIEuzCCA6OgAwIBAgIBAjANBgkqhkiG9w0BAQUFADBiMQswCQYDVQQGEwJVUzETMBEGA1UEChMKQXBwbGUgSW5jLjEmMCQGA1UECxMdQXBwbGUgQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkxFjAUBgNVBAMTDUFwcGxlIFJvb3QgQ0EwHhcNMDYwNDI1MjE0MDM2WhcNMzUwMjA5MjE0MDM2WjBiMQswCQYDVQQGEwJVUzETMBEGA1UEChMKQXBwbGUgSW5jLjEmMCQGA1UECxMdQXBwbGUgQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkxFjAUBgNVBAMTDUFwcGxlIFJvb3QgQ0EwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDkkakJH5HbHkdQ6wXtXnmELes2oldMVeyLGYne+Uts9QerIjAC6Bg++FAJ039BqJj50cpmnCRrEdCju+QbKsMflZ56DKRHi1vUFjczy8QPTc4UadHJGXL1XQ7Vf1+b8iUDulWPTV0N8WQ1IxVLFVkds5T39pyez1C6wVhQZ48ItCD3y6wsIG9wtj8BMIy3Q88PnT3zK0koGsj+zrW5DtleHNbLPbU6rfQPDgCSC7EhFi501TwN22IWq6NxkkdTVcGvL0Gz+PvjcM3mo0xFfh9Ma1CWQYnEdGILEINBhzOKgbEwWOxaBDKMaLOPHd5lc/9nXmW8Sdh2nzMUZaF3lMktAgMBAAGjggF6MIIBdjAOBgNVHQ8BAf8EBAMCAQYwDwYDVR0TAQH/BAUwAwEB/zAdBgNVHQ4EFgQUK9BpR5R2Cf70a40uQKb3R01/CF4wHwYDVR0jBBgwFoAUK9BpR5R2Cf70a40uQKb3R01/CF4wggERBgNVHSAEggEIMIIBBDCCAQAGCSqGSIb3Y2QFATCB8jAqBggrBgEFBQcCARYeaHR0cHM6Ly93d3cuYXBwbGUuY29tL2FwcGxlY2EvMIHDBggrBgEFBQcCAjCBthqBs1JlbGlhbmNlIG9uIHRoaXMgY2VydGlmaWNhdGUgYnkgYW55IHBhcnR5IGFzc3VtZXMgYWNjZXB0YW5jZSBvZiB0aGUgdGhlbiBhcHBsaWNhYmxlIHN0YW5kYXJkIHRlcm1zIGFuZCBjb25kaXRpb25zIG9mIHVzZSwgY2VydGlmaWNhdGUgcG9saWN5IGFuZCBjZXJ0aWZpY2F0aW9uIHByYWN0aWNlIHN0YXRlbWVudHMuMA0GCSqGSIb3DQEBBQUAA4IBAQBcNplMLXi37Yyb3PN3m/J20ncwT8EfhYOFG5k9RzfyqZtAjizUsZAS2L70c5vu0mQPy3lPNNiiPvl4/2vIB+x9OYOLUyDTOMSxv5pPCmv/K/xZpwUJfBdAVhEedNO3iyM7R6PVbyTi69G3cN8PReEnyvFteO3ntRcXqNx+IjXKJdXZD9Zr1KIkIxH3oayPc4FgxhtbCS+SsvhESPBgOJ4V9T0mZyCKM2r3DYLP3uujL/lTaltkwGMzd/c6ByxW69oPIQ7aunMZT7XZNn/Bh1XZp5m5MkL72NVxnn6hUrcbvZNCJBIqxw8dtk2cXmPIS4AXUKqK1drk/NAJBzewdXUh";
@@ -585,7 +585,7 @@ static NSString *rootAppleCA = @"MIIEuzCCA6OgAwIBAgIBAjANBgkqhkiG9w0BAQUFADBiMQs
         // Verify the signature
         BIO *b_receiptPayload;
         int result = PKCS7_verify(p7, NULL, store, b_receiptPayload, 0);
- 
+
         free(receiptBytes);
         free(appleBytes);
 
@@ -626,7 +626,7 @@ static NSString *rootAppleCA = @"MIIEuzCCA6OgAwIBAgIBAjANBgkqhkiG9w0BAQUFADBiMQs
     recreq.delegate = delegate;
     delegate.plugin  = self;
     delegate.command = command;
-    
+
 #if ARC_ENABLED
     self.retainer[@"receiptRefreshRequest"] = recreq;
     self.retainer[@"receiptRefreshRequestDelegate"] = delegate;
@@ -698,7 +698,7 @@ static NSString *rootAppleCA = @"MIIEuzCCA6OgAwIBAgIBAjANBgkqhkiG9w0BAQUFADBiMQs
 
 #if ARC_DISABLED
 - (void) dealloc {
-    [plugin  release];   
+    [plugin  release];
     [command release];
     [super   dealloc];
 }
