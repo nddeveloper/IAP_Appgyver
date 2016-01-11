@@ -75,6 +75,11 @@ SOFTWARE.
             <!-- In-App Billing Permission -->
             <uses-permission android:name="com.android.vending.BILLING" />
         </config-file>
+        <config-file target="*-Info.plist" parent="UIBackgroundModes">
+   		<array>
+	        	<string>remote-notifications</string>
+	   	</array>
+	</config-file>
 
         <!-- Cordova >= 3.0.0 -->
         <config-file target="res/xml/config.xml" parent="/*">
